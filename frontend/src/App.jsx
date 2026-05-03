@@ -28,7 +28,7 @@ function App() {
     }
     
     // Fetch history
-    axios.get(`http://localhost:5000/api/history/${sid}`)
+    axios.get(`https://pdf-chatbot-a5er.onrender.com/api/history/${sid}`)
       .then(res => {
         if (res.data.messages && res.data.messages.length > 0) {
           setMessages(res.data.messages);
@@ -63,7 +63,7 @@ function App() {
     formData.append('apiKey', apiKey);
 
     try {
-      await axios.post('http://localhost:5000/api/upload', formData, {
+      await axios.post('https://pdf-chatbot-a5er.onrender.com/api/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       setPdfProcessed(true);
@@ -94,7 +94,7 @@ function App() {
     setIsTyping(true);
 
     try {
-      const res = await axios.post('http://localhost:5000/api/chat', {
+      const res = await axios.post('https://pdf-chatbot-a5er.onrender.com/api/chat', {
         sessionId,
         prompt: userMessage.content,
         apiKey
