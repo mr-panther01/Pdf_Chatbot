@@ -9,13 +9,7 @@ import path from 'path';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
-import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
-import { HuggingFaceTransformersEmbeddings } from '@langchain/community/embeddings/huggingface_transformers';
-import { env } from '@huggingface/transformers';
-
-// Configure transformers to use /tmp for cache
-env.cacheDir = '/tmp';
-env.allowLocalModels = false;
+import { GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { createStuffDocumentsChain } from 'langchain/chains/combine_documents';
 import { createRetrievalChain } from 'langchain/chains/retrieval';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
@@ -73,10 +67,10 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
             }
         });
 
-        console.log('Starting local embedding processing...');
-        const embeddings = new HuggingFaceTransformersEmbeddings({
-            modelName: 'Xenova/all-MiniLM-L6-v2',
-            cacheDir: '/tmp/huggingface-cache'
+        console.log('Generating Gemini embeddings...');
+        const embeddings = new GoogleGenerativeAIEmbeddings({
+            model: 'gemini-embedding-2',
+            apiKey: apiKey || process.env.GOOGLE_API_KEY
         });
         
         console.log('Generating vector store...');
