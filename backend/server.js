@@ -9,7 +9,8 @@ import path from 'path';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
-import { OpenAIEmbeddings, ChatOpenAI } from '@langchain/openai';
+import { ChatOpenAI } from '@langchain/openai';
+import { GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
 import { createStuffDocumentsChain } from 'langchain/chains/combine_documents';
 import { createRetrievalChain } from 'langchain/chains/retrieval';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
@@ -67,26 +68,15 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
             }
         });
 
-        console.log('Generating OpenRouter embeddings...');
-        let openRouterApiKey = apiKey;
-        if (!openRouterApiKey || openRouterApiKey === 'undefined' || openRouterApiKey === 'null') {
-            openRouterApiKey = process.env.OPENROUTER_API_KEY;
-        }
-        if (!openRouterApiKey || openRouterApiKey === 'undefined') {
-            throw new Error('OpenRouter API key is missing. Please add it to the Render Environment or frontend UI.');
+        console.log('Generating Gemini embeddings...');
+        const googleApiKey = apiKey || process.env.GOOGLE_API_KEY;
+        if (!googleApiKey || googleApiKey === 'undefined') {
+            throw new Error('Google API key is missing. Required for embeddings.');
         }
         
-        const embeddings = new OpenAIEmbeddings({
-            openAIApiKey: openRouterApiKey,
-            modelName: 'nomic-ai/nomic-embed-text-v1.5',
-            configuration: { 
-                baseURL: 'https://openrouter.ai/api/v1',
-                defaultHeaders: {
-                    "Authorization": `Bearer ${openRouterApiKey}`,
-                    "HTTP-Referer": "https://pdf-chatbot-pied.vercel.app",
-                    "X-Title": "PDF Chatbot"
-                }
-            }
+        const embeddings = new GoogleGenerativeAIEmbeddings({
+            model: 'gemini-embedding-2',
+            apiKey: googleApiKey
         });
         
         console.log('Generating vector store...');
