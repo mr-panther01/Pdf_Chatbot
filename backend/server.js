@@ -68,7 +68,7 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
         });
 
         const embeddings = new GoogleGenerativeAIEmbeddings({
-            model: 'text-embedding-004',
+            model: 'gemini-embedding-2',
             apiKey: apiKey || process.env.GOOGLE_API_KEY
         });
         
