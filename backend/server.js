@@ -9,7 +9,8 @@ import path from 'path';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
-import { GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { HuggingFaceTransformersEmbeddings } from '@langchain/community/embeddings/hf_transformers';
 import { createStuffDocumentsChain } from 'langchain/chains/combine_documents';
 import { createRetrievalChain } from 'langchain/chains/retrieval';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
@@ -67,9 +68,8 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
             }
         });
 
-        const embeddings = new GoogleGenerativeAIEmbeddings({
-            model: 'gemini-embedding-2',
-            apiKey: apiKey || process.env.GOOGLE_API_KEY
+        const embeddings = new HuggingFaceTransformersEmbeddings({
+            modelName: 'Xenova/all-MiniLM-L6-v2',
         });
         
         const vectorStore = await MemoryVectorStore.fromDocuments(splits, embeddings);
