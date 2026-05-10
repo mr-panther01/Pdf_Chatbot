@@ -10,7 +10,7 @@ import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
-import { HuggingFaceTransformersEmbeddings } from '@langchain/community/embeddings/huggingface_transformers';
+import { HuggingFaceInferenceEmbeddings } from '@langchain/community/embeddings/hf';
 import { createStuffDocumentsChain } from 'langchain/chains/combine_documents';
 import { createRetrievalChain } from 'langchain/chains/retrieval';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
@@ -68,11 +68,10 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
             }
         });
 
-        console.log('Starting local embedding processing...');
-        const embeddings = new HuggingFaceTransformersEmbeddings({
-            modelName: 'Xenova/all-MiniLM-L6-v2',
-            // Render has a read-only filesystem in some areas, so we use /tmp for caching the model
-            cacheDir: '/tmp/huggingface-cache'
+        console.log('Starting remote HuggingFace embedding processing...');
+        const embeddings = new HuggingFaceInferenceEmbeddings({
+            apiKey: process.env.HUGGINGFACEHUB_API_KEY,
+            model: 'sentence-transformers/all-MiniLM-L6-v2',
         });
         
         console.log('Generating vector store...');
