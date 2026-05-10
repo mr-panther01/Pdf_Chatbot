@@ -9,7 +9,7 @@ import path from 'path';
 import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
-import { GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { OpenAIEmbeddings, ChatOpenAI } from '@langchain/openai';
 import { createStuffDocumentsChain } from 'langchain/chains/combine_documents';
 import { createRetrievalChain } from 'langchain/chains/retrieval';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
@@ -67,10 +67,14 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
             }
         });
 
-        console.log('Generating Gemini embeddings...');
-        const embeddings = new GoogleGenerativeAIEmbeddings({
-            model: 'gemini-embedding-2',
-            apiKey: apiKey || process.env.GOOGLE_API_KEY
+        console.log('Generating OpenRouter embeddings...');
+        const openRouterApiKey = apiKey || process.env.OPENROUTER_API_KEY;
+        if (!openRouterApiKey) throw new Error('OpenRouter API key is missing');
+        
+        const embeddings = new OpenAIEmbeddings({
+            apiKey: openRouterApiKey,
+            model: 'nomic-ai/nomic-embed-text-v1.5',
+            configuration: { baseURL: 'https://openrouter.ai/api/v1' }
         });
         
         console.log('Generating vector store...');
@@ -108,10 +112,12 @@ app.post('/api/chat', async (req, res) => {
         chat.messages.push({ role: 'user', content: prompt });
         await chat.save();
         
-        const llm = new ChatGoogleGenerativeAI({
-            model: 'gemini-2.5-flash',
+        const openRouterApiKey = apiKey || process.env.OPENROUTER_API_KEY;
+        const llm = new ChatOpenAI({
+            model: 'google/gemini-2.5-flash',
             temperature: 0,
-            apiKey: apiKey || process.env.GOOGLE_API_KEY
+            apiKey: openRouterApiKey,
+            configuration: { baseURL: 'https://openrouter.ai/api/v1' }
         });
         
         const systemPrompt = `You are an assistant for question-answering tasks.
