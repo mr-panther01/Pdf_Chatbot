@@ -68,13 +68,25 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
         });
 
         console.log('Generating OpenRouter embeddings...');
-        const openRouterApiKey = apiKey || process.env.OPENROUTER_API_KEY;
-        if (!openRouterApiKey) throw new Error('OpenRouter API key is missing');
+        let openRouterApiKey = apiKey;
+        if (!openRouterApiKey || openRouterApiKey === 'undefined' || openRouterApiKey === 'null') {
+            openRouterApiKey = process.env.OPENROUTER_API_KEY;
+        }
+        if (!openRouterApiKey || openRouterApiKey === 'undefined') {
+            throw new Error('OpenRouter API key is missing. Please add it to the Render Environment or frontend UI.');
+        }
         
         const embeddings = new OpenAIEmbeddings({
-            apiKey: openRouterApiKey,
-            model: 'nomic-ai/nomic-embed-text-v1.5',
-            configuration: { baseURL: 'https://openrouter.ai/api/v1' }
+            openAIApiKey: openRouterApiKey,
+            modelName: 'nomic-ai/nomic-embed-text-v1.5',
+            configuration: { 
+                baseURL: 'https://openrouter.ai/api/v1',
+                defaultHeaders: {
+                    "Authorization": `Bearer ${openRouterApiKey}`,
+                    "HTTP-Referer": "https://pdf-chatbot-pied.vercel.app",
+                    "X-Title": "PDF Chatbot"
+                }
+            }
         });
         
         console.log('Generating vector store...');
@@ -112,12 +124,23 @@ app.post('/api/chat', async (req, res) => {
         chat.messages.push({ role: 'user', content: prompt });
         await chat.save();
         
-        const openRouterApiKey = apiKey || process.env.OPENROUTER_API_KEY;
+        let openRouterApiKey = apiKey;
+        if (!openRouterApiKey || openRouterApiKey === 'undefined' || openRouterApiKey === 'null') {
+            openRouterApiKey = process.env.OPENROUTER_API_KEY;
+        }
+        
         const llm = new ChatOpenAI({
-            model: 'google/gemini-2.5-flash',
+            modelName: 'google/gemini-2.5-flash',
             temperature: 0,
-            apiKey: openRouterApiKey,
-            configuration: { baseURL: 'https://openrouter.ai/api/v1' }
+            openAIApiKey: openRouterApiKey,
+            configuration: { 
+                baseURL: 'https://openrouter.ai/api/v1',
+                defaultHeaders: {
+                    "Authorization": `Bearer ${openRouterApiKey}`,
+                    "HTTP-Referer": "https://pdf-chatbot-pied.vercel.app",
+                    "X-Title": "PDF Chatbot"
+                }
+            }
         });
         
         const systemPrompt = `You are an assistant for question-answering tasks.
