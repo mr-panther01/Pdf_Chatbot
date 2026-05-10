@@ -10,7 +10,12 @@ import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
 import { ChatOpenAI } from '@langchain/openai';
-import { GoogleGenerativeAIEmbeddings } from '@langchain/google-genai';
+import { HuggingFaceTransformersEmbeddings } from '@langchain/community/embeddings/huggingface_transformers';
+import { env } from '@huggingface/transformers';
+
+env.cacheDir = '/tmp';
+env.allowLocalModels = false;
+
 import { createStuffDocumentsChain } from 'langchain/chains/combine_documents';
 import { createRetrievalChain } from 'langchain/chains/retrieval';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
@@ -50,8 +55,8 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
         const docs = await loader.load();
         
         const splitter = new RecursiveCharacterTextSplitter({
-            chunkSize: 1000,
-            chunkOverlap: 200,
+            chunkSize: 500,
+            chunkOverlap: 100,
         });
         
         const splits = await splitter.splitDocuments(docs);
@@ -68,19 +73,22 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
             }
         });
 
-        console.log('Generating Gemini embeddings...');
-        const googleApiKey = process.env.GOOGLE_API_KEY;
-        if (!googleApiKey || googleApiKey === 'undefined') {
-            throw new Error('Google API key is missing. Please add GOOGLE_API_KEY to your Render Environment.');
-        }
-        
-        const embeddings = new GoogleGenerativeAIEmbeddings({
-            model: 'gemini-embedding-2',
-            apiKey: googleApiKey
+        console.log('Generating Local embeddings...');
+        const embeddings = new HuggingFaceTransformersEmbeddings({
+            modelName: 'Xenova/all-MiniLM-L6-v2'
         });
         
-        console.log('Generating vector store...');
-        const vectorStore = await MemoryVectorStore.fromDocuments(splits, embeddings);
+        console.log('Generating vector store in small batches to prevent memory crash...');
+        const vectorStore = new MemoryVectorStore(embeddings);
+        
+        // Process in small batches of 5 to keep RAM usage extremely low
+        const batchSize = 5;
+        for (let i = 0; i < splits.length; i += batchSize) {
+            const batch = splits.slice(i, i + batchSize);
+            await vectorStore.addDocuments(batch);
+            console.log(`Processed batch ${i / batchSize + 1} of ${Math.ceil(splits.length / batchSize)}`);
+        }
+        
         vectorStores[sessionId] = vectorStore;
         console.log('Vector store created successfully.');
         

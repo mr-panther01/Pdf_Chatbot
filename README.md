@@ -92,4 +92,4 @@ The application will be available at `http://localhost:5173`.
 Distributed under the MIT License. See `LICENSE` for more information.
 
 ---
-Built with ❤️ by [Your Name]
+Built with ❤️ by Aditya Sharma
