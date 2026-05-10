@@ -69,9 +69,9 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
         });
 
         console.log('Generating Gemini embeddings...');
-        const googleApiKey = apiKey || process.env.GOOGLE_API_KEY;
+        const googleApiKey = process.env.GOOGLE_API_KEY;
         if (!googleApiKey || googleApiKey === 'undefined') {
-            throw new Error('Google API key is missing. Required for embeddings.');
+            throw new Error('Google API key is missing. Please add GOOGLE_API_KEY to your Render Environment.');
         }
         
         const embeddings = new GoogleGenerativeAIEmbeddings({
