@@ -11,6 +11,11 @@ import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { MemoryVectorStore } from 'langchain/vectorstores/memory';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import { HuggingFaceTransformersEmbeddings } from '@langchain/community/embeddings/huggingface_transformers';
+import { env } from '@huggingface/transformers';
+
+// Configure transformers to use /tmp for cache
+env.cacheDir = '/tmp';
+env.allowLocalModels = false;
 import { createStuffDocumentsChain } from 'langchain/chains/combine_documents';
 import { createRetrievalChain } from 'langchain/chains/retrieval';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
