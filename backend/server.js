@@ -128,7 +128,7 @@ app.post('/api/chat', async (req, res) => {
         }
         
         const llm = new ChatOpenAI({
-            modelName: 'google/gemini-2.5-flash:free',
+            modelName: 'google/gemini-2.5-flash',
             temperature: 0,
             maxTokens: 1000,
             openAIApiKey: openRouterApiKey,
