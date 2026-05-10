@@ -68,12 +68,17 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
             }
         });
 
+        console.log('Starting local embedding processing...');
         const embeddings = new HuggingFaceTransformersEmbeddings({
             modelName: 'Xenova/all-MiniLM-L6-v2',
+            // Render has a read-only filesystem in some areas, so we use /tmp for caching the model
+            cacheDir: '/tmp/huggingface-cache'
         });
         
+        console.log('Generating vector store...');
         const vectorStore = await MemoryVectorStore.fromDocuments(splits, embeddings);
         vectorStores[sessionId] = vectorStore;
+        console.log('Vector store created successfully.');
         
         // Delete uploaded file
         fs.unlinkSync(req.file.path);
@@ -84,8 +89,8 @@ app.post('/api/upload', upload.single('pdf'), async (req, res) => {
 
         res.json({ message: 'PDF processed successfully' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: error.message });
+        console.error('UPLOAD ERROR DETAILED:', error);
+        res.status(500).json({ error: `Upload failed: ${error.message}` });
     }
 });
 
